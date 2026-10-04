@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa Conceptual Interactivo: Métodos y Enfoques de Investigación</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Node animations & transitions */
+    .branch-transition {
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .node-interactive {
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .node-interactive:hover {
+      transform: translateY(-2px);
+    }
+    .inspector-glow {
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.6), 0 10px 40px -10px rgba(99, 102, 241, 0.35);
+      transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+    }
+    .pulse-ring {
+      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6);
+      animation: pulseR 2s infinite cubic-bezier(0.66, 0, 0, 1);
+    }
+    @keyframes pulseR {
+      to {
+        box-shadow: 0 0 0 12px rgba(99, 102, 241, 0);
+      }
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background: white !important;
+        color: black !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen selection:bg-indigo-500 selection:text-white flex flex-col">
+
+  <!-- Top header -->
+  <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 font-extrabold text-sm">
+          MC
+        </div>
+        <div>
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-indigo-400 block">Competencias Investigativas</span>
+          <h1 class="text-sm sm:text-base font-bold text-white leading-tight">Mapa Dinámico: Métodos y Enfoques</h1>
+        </div>
+      </div>
+      
+      <!-- Actions -->
+      <div class="flex items-center gap-2 no-print">
+        <div class="hidden md:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
+          <span class="text-slate-400">Explorados:</span>
+          <span id="progressCount" class="font-bold text-indigo-400 font-mono">1 / 10</span>
+          <div class="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden ml-1">
+            <div id="progressBar" class="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 w-[10%] transition-all duration-300"></div>
+          </div>
+        </div>
+
+        <button onclick="expandAll()" class="px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:border-slate-600 transition-all">
+          Desplegar Todo
+        </button>
+        <button onclick="resetTree()" class="px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:border-slate-600 transition-all">
+          Reiniciar
+        </button>
+        <button onclick="window.print()" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition-all shadow-md">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+          </svg>
+          PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
+    
+    <!-- Hero / Instructions -->
+    <div class="bg-gradient-to-r from-slate-900 via-slate-800/95 to-indigo-950/70 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl relative overflow-hidden">
+      <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="space-y-2 max-w-3xl">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+              Interactivo: Haz clic en cada nodo para revelar la definición y ramas
+            </span>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              Sampieri &amp; Pimienta (2018)
+            </span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+            Estructura Conceptual de Métodos y Enfoques
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Para evitar saturación visual, el mapa se presenta de forma progresiva. <strong>Haz clic en cualquier tarjeta</strong>: se abrirá inmediatamente su <strong>definición clara</strong> a la derecha y se <strong>desplegarán automáticamente las ramas que le siguen</strong>.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 self-stretch md:self-auto justify-end">
+          <a href="#diferencias" class="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-800/90 border border-slate-700 hover:border-slate-500 text-xs font-semibold text-slate-200 transition-all">
+            Ver Comparativa Teórica ↓
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- Interactive Branching Tree (8 Cols) -->
+      <div class="lg:col-span-8 space-y-6">
+        
+        <!-- LEVEL 0: ROOT NODE -->
+        <div class="flex flex-col items-center">
+          <div 
+            id="node-root"
+            onclick="handleNodeClick('root')"
+            class="node-interactive cursor-pointer w-full max-w-xl bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 border-2 border-indigo-500/80 rounded-2xl p-5 shadow-2xl relative overflow-hidden group">
+            
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/30 text-indigo-300 border border-indigo-400/40">
+                Punto de Partida
+              </span>
+              <span id="badge-root" class="text-[11px] font-medium text-indigo-300 flex items-center gap-1 group-hover:text-white">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Explorado</span>
+              </span>
+            </div>
+
+            <div class="mt-2">
+              <h3 class="text-lg sm:text-xl font-extrabold text-white flex items-center justify-between">
+                <span>Investigación Científica</span>
+                <span id="chevron-root" class="text-indigo-400 transition-transform duration-300">▼</span>
+              </h3>
+              <p class="text-xs text-indigo-200/90 mt-1">
+                Proceso sistemático, controlado y empírico para producir conocimiento validable.
+              </p>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-indigo-900/60 flex items-center justify-between text-[11px] text-slate-400">
+              <span class="text-indigo-300 font-medium">💡 Clic para ver definición completa</span>
+              <span class="font-mono text-[10px] text-slate-400">Bifurca en: Enfoques y Métodos</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Connector from Level 0 to Level 1 -->
+          <div id="conn-level-1" class="flex flex-col items-center my-3 transition-opacity duration-300">
+            <div class="w-0.5 h-6 bg-gradient-to-b from-indigo-500 to-slate-700"></div>
+            <div class="bg-slate-900 border border-indigo-500/40 text-[10px] font-semibold uppercase tracking-wider text-indigo-300 px-3 py-0.5 rounded-full">
+              se organiza a través de dos dimensiones
+            </div>
+            <div class="w-0.5 h-6 bg-gradient-to-b from-slate-700 to-indigo-500"></div>
+          </div>
+        </div>
+
+        <!-- LEVEL 1: THE TWO MAIN PILLARS -->
+        <div id="branch-level-1" class="grid grid-cols-1 sm:grid-cols-2 gap-4 branch-transition">
+          
+          <!-- Pillar A: Enfoques -->
+          <div 
+            id="node-enfoques"
+            onclick="handleNodeClick('enfoques')"
+            class="node-interactive cursor-pointer bg-gradient-to-br from-blue-950/80 via-slate-900/95 to-blue-900/40 border-2 border-blue-500/50 hover:border-blue-400 rounded-2xl p-4 shadow-lg transition-all relative">
+            
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-400/30">
+                Estrategia Global (Ruta)
+              </span>
+              <span id="badge-enfoques" class="text-[10px] text-blue-400 font-medium flex items-center gap-1">
+                Toca para desplegar ▾
+              </span>
+            </div>
+
+            <h4 class="text-base font-bold text-white flex items-center justify-between">
+              <span>Enfoques de Investigación</span>
+              <span id="chevron-enfoques" class="text-blue-400 transition-transform duration-300">▼</span>
+            </h4>
+            <span class="text-[11px] text-blue-300/80 block mt-0.5">Hernández-Sampieri &amp; Mendoza (2018)</span>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              Es la cosmovisión o paradigma amplio: define cómo concebimos la realidad (si buscamos medirla, interpretarla o combinar ambas).
+            </p>
+
+            <div class="mt-3 pt-2 border-t border-blue-900/40 flex items-center justify-between text-[11px] text-blue-300 font-medium">
+              <span>3 rutas fundamentales</span>
+              <span class="text-xs">👉 Clic aquí</span>
+            </div>
+          </div>
+
+          <!-- Pillar B: Métodos -->
+          <div 
+            id="node-metodos"
+            onclick="handleNodeClick('metodos')"
+            class="node-interactive cursor-pointer bg-gradient-to-br from-emerald-950/80 via-slate-900/95 to-emerald-900/40 border-2 border-emerald-500/50 hover:border-emerald-400 rounded-2xl p-4 shadow-lg transition-all relative">
+            
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-400/30">
+                Procedimiento Lógico
+              </span>
+              <span id="badge-metodos" class="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+                Toca para desplegar ▾
+              </span>
+            </div>
+
+            <h4 class="text-base font-bold text-white flex items-center justify-between">
+              <span>Métodos de Investigación</span>
+              <span id="chevron-metodos" class="text-emerald-400 transition-transform duration-300">▼</span>
+            </h4>
+            <span class="text-[11px] text-emerald-300/80 block mt-0.5">Pimienta Prieto et al. (2018)</span>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              Es el camino técnico y estructurado de operaciones racionales (inducir, deducir, analizar) para contrastar datos con rigor.
+            </p>
+
+            <div class="mt-3 pt-2 border-t border-emerald-900/40 flex items-center justify-between text-[11px] text-emerald-300 font-medium">
+              <span>Operaciones lógicas clave</span>
+              <span class="text-xs">👉 Clic aquí</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- LEVEL 2: DETAILED SUB-BRANCHES -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          
+          <!-- Enfoques Sub-Items (Column Left) -->
+          <div id="branch-enfoques-children" class="space-y-3 branch-transition">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5 px-1">
+              <span>↓ Las 3 Rutas Metodológicas</span>
+            </div>
+
+            <!-- Cuantitativo -->
+            <div 
+              id="node-cuantitativo"
+              onclick="handleNodeClick('cuantitativo')"
+              class="node-interactive cursor-pointer bg-gradient-to-br from-blue-950/70 via-slate-900/95 to-blue-900/40 border border-blue-500/50 hover:border-blue-400 rounded-xl p-3.5 shadow-md">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs sm:text-sm text-blue-300">1. Ruta Cuantitativa</span>
+                <span class="text-[10px] font-mono text-blue-300 bg-blue-900/60 px-2 py-0.5 rounded border border-blue-700/60">Deductivo</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">Secuencial y probatorio. Mide numéricamente fenómenos y contrasta hipótesis mediante estadística.</p>
+              <div class="mt-2 text-[10px] text-blue-300/80 flex justify-between items-center">
+                <span>Generalización y control</span>
+                <span class="text-blue-400 font-semibold">Ver detalles →</span>
+              </div>
+            </div>
+
+            <!-- Cualitativo -->
+            <div 
+              id="node-cualitativo"
+              onclick="handleNodeClick('cualitativo')"
+              class="node-interactive cursor-pointer bg-gradient-to-br from-amber-950/70 via-slate-900/95 to-amber-900/40 border border-amber-500/50 hover:border-amber-400 rounded-xl p-3.5 shadow-md">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs sm:text-sm text-amber-300">2. Ruta Cualitativa</span>
+                <span class="text-[10px] font-mono text-amber-300 bg-amber-900/60 px-2 py-0.5 rounded border border-amber-700/60">Inductivo</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">Flexible y circular. Estudia los significados y experiencias humanas en su contexto natural.</p>
+              <div class="mt-2 text-[10px] text-amber-300/80 flex justify-between items-center">
+                <span>Comprensión contextual</span>
+                <span class="text-amber-400 font-semibold">Ver detalles →</span>
+              </div>
+            </div>
+
+            <!-- Mixto -->
+            <div 
+              id="node-mixto"
+              onclick="handleNodeClick('mixto')"
+              class="node-interactive cursor-pointer bg-gradient-to-br from-purple-950/70 via-slate-900/95 to-purple-900/40 border border-purple-500/50 hover:border-purple-400 rounded-xl p-3.5 shadow-md">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs sm:text-sm text-purple-300">3. Ruta Mixta</span>
+                <span class="text-[10px] font-mono text-purple-300 bg-purple-900/60 px-2 py-0.5 rounded border border-purple-700/60">Triangulación</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">Integración sistemática de datos cuantitativos y cualitativos para visión de 360 grados.</p>
+              <div class="mt-2 text-[10px] text-purple-300/80 flex justify-between items-center">
+                <span>Pragmatismo metodológico</span>
+                <span class="text-purple-400 font-semibold">Ver detalles →</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Métodos Sub-Items (Column Right) -->
+          <div id="branch-metodos-children" class="space-y-3 branch-transition">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 px-1">
+              <span>↓ Métodos y Operaciones Lógicas</span>
+            </div>
+
+            <!-- Deductivo -->
+            <div 
+              id="node-deductivo"
+              onclick="handleNodeClick('deductivo')"
+              class="node-interactive cursor-pointer bg-gradient-to-br from-emerald-950/70 via-slate-900/95 to-emerald-900/40 border border-emerald-500/50 hover:border-emerald-400 rounded-xl p-3.5 shadow-md">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs sm:text-sm text-emerald-300">Método Deductivo</span>
+                <span class="text-[10px] font-mono text-emerald-300 bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-700/60">General → Particular</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">Parte de teorías o leyes generales para derivar hipótesis contrastables con experimentos.</p>
+              <div class="mt-2 text-[10px] text-emerald-300/80 flex justify-between items-center">
+                <span>Validación rigurosa</span>
+                <span class="text-emerald-400 font-semibold">Ver detalles →</span>
+              </div>
+            </div>
+
+            <!-- Inductivo -->
+            <div 
+              id="node-inductivo"
+              onclick="handleNodeClick('inductivo')"
+              class="node-interactive cursor-pointer bg-gradient-to-br from-teal-950/70 via-slate-900/95 to-teal-900/40 border border-teal-500/50 hover:border-teal-400 rounded-xl p-3.5 shadow-md">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs sm:text-sm text-teal-300">Método Inductivo</span>
+                <span class="text-[10px] font-mono text-teal-300 bg-teal-900/60 px-2 py-0.5 rounded border border-teal-700/60">Particular → General</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">Parte de la observación reiterada de casos particulares para descubrir patrones y leyes.</p>
+              <div class="mt-2 text-[10px] text-teal-300/80 flex justify-between items-center">
+                <span>Descubrimiento empírico</span>
+                <span class="text-teal-400 font-semibold">Ver detalles →</span>
+              </div>
+            </div>
+
+            <!-- Analítico - Sintético -->
+            <div 
+              id="node-analitico"
+              onclick="handleNodeClick('analitico')"
+              class="node-interactive cursor-pointer bg-gradient-to-br from-cyan-950/70 via-slate-900/95 to-cyan-900/40 border border-cyan-500/50 hover:border-cyan-400 rounded-xl p-3.5 shadow-md">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs sm:text-sm text-cyan-300">Analítico - Sintético</span>
+                <span class="text-[10px] font-mono text-cyan-300 bg-cyan-900/60 px-2 py-0.5 rounded border border-cyan-700/60">Descomposición ↔ Unión</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">Descompone un todo en sus componentes para examinarlos (análisis) y luego los integra (síntesis).</p>
+              <div class="mt-2 text-[10px] text-cyan-300/80 flex justify-between items-center">
+                <span>Modelado sistémico</span>
+                <span class="text-cyan-400 font-semibold">Ver detalles →</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- LEVEL 3: CONVERGENCE IN DATA SCIENCE -->
+        <div 
+          id="node-datascience"
+          onclick="handleNodeClick('datascience')"
+          class="node-interactive cursor-pointer bg-gradient-to-r from-indigo-950/80 via-slate-900 to-cyan-950/80 border-2 border-indigo-500/70 hover:border-indigo-400 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+          
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              Convergencia en Campo Profesional
+            </span>
+            <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Ruta Mixta + Multimétodo</span>
+          </div>
+
+          <h4 class="text-base sm:text-lg font-bold text-white">¿Qué métodos y enfoques usa la Ciencia de Datos?</h4>
+          <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+            No utiliza un solo camino. Articula la <strong>inducción computacional</strong> (Machine Learning para descubrir patrones en datos) con la <strong>deducción matemática</strong> (pruebas A/B y validación de hipótesis) y la <strong>comprensión cualitativa</strong> (experiencia de usuario y ética algorítmica).
+          </p>
+
+          <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-cyan-300 font-medium">
+            <span>⚡ Clic para ver cómo se conecta en proyectos reales</span>
+            <span class="text-xs">Inspeccionar →</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Inspector / Interactive Definition Sheet (4 Cols) -->
+      <div id="inspectorPanel" class="lg:col-span-4 bg-gradient-to-b from-indigo-950/90 via-slate-900/95 to-slate-950 border-2 border-indigo-500/80 rounded-3xl p-6 inspector-glow sticky top-20 space-y-4 transition-all duration-300">
+        
+        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="relative flex h-3 w-3">
+              <span id="inspectorPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span id="inspectorDot" class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+            </span>
+            <span id="inspectorTitleHeader" class="text-xs font-extrabold uppercase tracking-wider text-cyan-300">Definición y Explicación</span>
+          </div>
+          <span id="inspectorCategory" class="text-[10px] px-2.5 py-0.5 rounded-full font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-400/40 font-semibold">Concepto Raíz</span>
+        </div>
+
+        <!-- Dynamic Breadcrumb / Full Path Container -->
+        <div id="inspectorBreadcrumbContainer" class="p-3 rounded-2xl bg-black/45 border border-white/10 space-y-1.5 backdrop-blur-sm shadow-inner">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <span>🧭 Ruta Conceptual:</span>
+            </span>
+            <span id="inspectorLevelBadge" class="text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full border">Nivel 0 (Raíz)</span>
+          </div>
+          <div id="inspectorBreadcrumbs" class="flex flex-wrap items-center gap-1.5 text-xs pt-0.5">
+            <!-- Dynamic breadcrumb nodes inserted via JavaScript -->
+          </div>
+        </div>
+
+        <div id="inspectorNodePill" class="px-3 py-1.5 rounded-xl bg-cyan-950/50 border border-cyan-500/30 flex items-center justify-between text-[11px] text-cyan-200">
+          <span class="flex items-center gap-1 font-medium">
+            <span>📍 Nodo en foco:</span>
+            <strong id="activeNodeLabel" class="text-white">Investigación Científica</strong>
+          </span>
+          <span id="inspectorStatusBadge" class="text-[10px] uppercase tracking-wider font-bold text-cyan-400 bg-cyan-900/60 px-1.5 py-0.5 rounded">En pantalla</span>
+        </div>
+
+        <div id="inspectorContent" class="space-y-4">
+          <div>
+            <h4 id="nodeTitle" class="text-xl font-extrabold text-white">Investigación Científica</h4>
+            <p id="nodeSubtitle" class="text-xs text-indigo-300 mt-0.5">Hernández-Sampieri &amp; Mendoza (2018) / Pimienta et al. (2018)</p>
+          </div>
+
+          <!-- Definition Box -->
+          <div class="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              ¿Qué es exactamente? (En lenguaje claro)
+            </span>
+            <p id="nodeDesc" class="text-xs text-slate-200 leading-relaxed">
+              Es un proceso estructurado, metódico y crítico para responder preguntas sobre la realidad. No se basa en corazonadas o dogmas, sino en contrastar ideas frente a evidencias concretas y verificables.
+            </p>
+          </div>
+
+          <!-- Characteristics Box -->
+          <div class="space-y-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block">
+              Características Principales:
+            </span>
+            <ul id="nodeFeatures" class="space-y-1.5 text-xs text-slate-300">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span><span>Sistemática y empírica: sigue fases claras y recolecta evidencias del mundo real.</span></li>
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span><span>Falible: sus conclusiones siempre pueden ajustarse si aparecen nuevos datos.</span></li>
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span><span>Articulada: necesita tanto un enfoque global (ruta) como métodos lógicos reglados.</span></li>
+            </ul>
+          </div>
+
+          <!-- Role in Data Science Box -->
+          <div class="p-3.5 bg-indigo-950/40 rounded-2xl border border-indigo-500/40">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300 block mb-1">
+              ¿Cómo se aplica en Ciencia de Datos?
+            </span>
+            <p id="nodeDsRole" class="text-xs text-indigo-100 leading-relaxed">
+              Es el marco que evita engañarnos con correlaciones que parecen reales pero son puro azar. Nos enseña a formular problemas de negocio claros, elegir métricas objetivas y verificar si un algoritmo realmente soluciona el problema.
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 text-center">
+          <p class="text-[11px] text-slate-500">
+            💡 Toca los otros nodos de la izquierda para ver su explicación inmediata.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Specific Synthesis Section: Método vs. Enfoque -->
+    <section id="diferencias" class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+      <div class="flex items-center gap-2">
+        <span class="h-6 w-1.5 bg-indigo-500 rounded-full"></span>
+        <h3 class="text-lg sm:text-xl font-bold text-white">
+          Diferencias y Relaciones Clave
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        
+        <!-- Card 1 -->
+        <div class="bg-slate-950/80 border border-blue-500/30 rounded-2xl p-5 space-y-2.5">
+          <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-300 font-bold flex items-center justify-center text-sm">
+            1
+          </div>
+          <h4 class="font-bold text-white text-sm">Diferencia entre Método y Enfoque</h4>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <strong>El enfoque</strong> (Hernández-Sampieri, 2018) es la <em>estrategia global o paradigma</em> desde el que se concibe el problema (si se busca medir objetivamente o comprender subjetivamente). 
+            <strong>El método</strong> (Pimienta et al., 2018) es el <em>conjunto articulado de pasos lógicos</em> (deducción, inducción, análisis) que se ejecutan dentro de esa estrategia para recabar y validar pruebas.
+          </p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="bg-slate-950/80 border border-emerald-500/30 rounded-2xl p-5 space-y-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center text-sm">
+            2
+          </div>
+          <h4 class="font-bold text-white text-sm">Relación de Métodos con Enfoques</h4>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Existe una relación de <em>coherencia y subordinación</em>: el enfoque elegido determina qué métodos tienen validez. La ruta cuantitativa exige métodos deductivos y estandarizados; la ruta cualitativa recurre a la inducción y la hermenéutica; y la mixta triangula múltiples métodos para enriquecer el hallazgo.
+          </p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="bg-slate-950/80 border border-purple-500/30 rounded-2xl p-5 space-y-2.5">
+          <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-300 font-bold flex items-center justify-center text-sm">
+            3
+          </div>
+          <h4 class="font-bold text-white text-sm">Relación y Continuo entre Enfoques</h4>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Hernández-Sampieri aclara que no son mundos opuestos ni rivales, sino un <strong>continuo interactivo</strong>. Ambos comparten fases similares (observación empírica, formulación de hipótesis, evaluación de evidencias y discusión), integrándose armónicamente a través del enfoque mixto.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- References Section (APA 7th ed) -->
+    <section class="bg-slate-900 border border-slate-800 text-slate-200 rounded-3xl p-6 sm:p-8 space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Bibliografía Obligatoria</span>
+          <h4 class="text-base sm:text-lg font-bold text-white">Fuentes Consultadas (Normas APA, 7.ª ed.)</h4>
+        </div>
+        <button 
+          onclick="copyReferences()" 
+          id="btnCopyRef"
+          class="no-print inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition-all">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+          <span id="copyBtnLabel">Copiar Referencias</span>
+        </button>
+      </div>
+
+      <div id="referencesBox" class="bg-slate-950/80 rounded-2xl p-5 border border-slate-800 text-xs sm:text-sm font-sans space-y-3 leading-relaxed text-slate-300">
+        <p class="pl-6 -indent-6">
+          Hernández-Sampieri, R., y Mendoza, C. P. (2018). Parte 1. Las rutas de investigación. En <em>Metodología de la investigación: Las rutas cuantitativa, cualitativa y mixta</em> (pp. 1-23). McGraw-Hill Interamericana Editores.
+        </p>
+        <p class="pl-6 -indent-6">
+          Pimienta Prieto, J., De la Orden Hoz, A., y Estrada Coronado, R. M. (2018). Utilidad y características de la metodología de investigación. En <em>Metodología de la investigación</em> (pp. 28-34). Pearson Educación.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 bg-slate-950/80">
+    <p>Competencias Investigativas | Mapa Conceptual Interactivo Paso a Paso | Programa en Ciencia de Datos</p>
+  </footer>
+
+  <script>
+    // Color theme configuration per node
+    const themePalettes = {
+      root: {
+        panelBg: 'linear-gradient(180deg, rgba(30, 27, 75, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+        borderColor: '#6366f1',
+        glowColor: '0 0 35px rgba(99, 102, 241, 0.4)',
+        headerColor: '#a5b4fc',
+        dotColor: '#818cf8',
+        pillBg: 'rgba(49, 46, 129, 0.5)',
+        pillBorder: 'rgba(99, 102, 241, 0.4)',
+        pillText: '#c7d2fe',
+        badgeBg: 'rgba(99, 102, 241, 0.2)',
+        badgeBorder: 'rgba(99, 102, 241, 0.5)',
+        badgeText: '#a5b4fc',
+        activeCardGlow: '0 0 0 3px rgba(99, 102, 241, 0.9), 0 0 30px rgba(99, 102, 241, 0.5)',
+        activeCardBg: 'linear-gradient(135deg, rgba(30, 27, 75, 0.95), rgba(15, 23, 42, 0.98))'
+      },
+      enfoques: {
+        panelBg: 'linear-gradient(180deg, rgba(23, 37, 84, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+        borderColor: '#3b82f6',
+        glowColor: '0 0 35px rgba(59, 130, 246, 0.4)',
+        headerColor: '#93c5fd',
+        dotColor: '#60a5fa',
+        pillBg: 'rgba(30, 58, 138, 0.5)',
+        pillBorder: 'rgba(59, 130, 246, 0.4)',
+        pillText: '#bfdbfe',
+        badgeBg: 'rgba(59, 130, 246, 0.2)',
+        badgeBorder: 'rgba(59, 130, 246, 0.5)',
+        badgeText: '#93c5fd',
+        activeCardGlow: '0 0 0 3px rgba(59, 130, 246, 0.9), 0 0 30px rgba(59, 130, 246, 0.5)',
+        activeCardBg: 'linear-gradient(135deg, rgba(23, 37, 84, 0.95), rgba(15, 23, 42, 0.98))'
+      },
+      metodos: {
+        panelBg: 'linear-gradient(180deg, rgba(6, 78, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+        borderColor: '#10b981',
+        glowColor: '0 0 35px rgba(16, 185, 129, 0.4)',
+        headerColor: '#6ee7b7',
+        dotColor: '#34d399',
+        pillBg: 'rgba(6, 78, 59, 0.5)',
+        pillBorder: 'rgba(16, 185, 129, 0.4)',
+        pillText: '#a7f3d0',
+        badgeBg: 'rgba(16, 185, 129, 0.2)',
+        badgeBorder: 'rgba(16, 185, 129, 0.5)',
+        badgeText: '#6ee7b7',
+        activeCardGlow: '0 0 0 3px rgba(16, 185, 129, 0.9), 0 0 30px rgba(16, 185, 129, 0.5)',
+        activeCardBg: 'linear-gradient(135deg, rgba(6, 78, 59, 0.95), rgba(15, 23, 42, 0.98))'
+      },
+      cuantitativo: {
+        panelBg: 'linear-gradient(180deg, rgba(30, 58, 138, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+        borderColor: '#3b82f6',
+        glowColor: '0 0 35px rgba(59, 130, 246, 0.45)',
+        headerColor: '#93c5fd',
+        dotColor: '#3b82f6',
+        pillBg: 'rgba(30, 58, 138, 0.55)',
+        pillBorder: 'rgba(59, 130, 246, 0.5)',
+        pillText: '#bfdbfe',
+        badgeBg: 'rgba(59, 130, 246, 0.25)',
+        badgeBorder: 'rgba(59, 130, 246, 0.5)',
+        badgeText: '#93c5fd',
+        activeCardGlow: '0 0 0 3px rgba(59, 130, 246, 0.9), 0 0 30px rgba(59, 130, 246, 0.5)',
+        activeCardBg: 'linear-gradient(135deg, rgba(30, 58, 138, 0.95), rgba(15, 23, 42, 0.98))'
+      },
+      cualitativo: {
+        panelBg: 'linear-gradient(180deg, rgba(69, 26, 3, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+        borderColor: '#f59e0b',
+        glowColor: '0 0 35px rgba(245, 158, 11, 0.45)',
+        headerColor: '#fcd34d',
+        dotColor: '#fbbf24',
+        pillBg: 'rgba(69, 26, 3, 0.6)',
+        pillBorder: 'rgba(245, 158, 11, 0.5)',
+        pillText: '#fde68a',
+        badgeBg: 'rgba(245, 158, 11, 0.25)',
+        badgeBorder: 'rgba(245, 158, 11, 0.5)',
+        badgeText: '#fcd34d',
+        activeCardGlow: '0 0 0 3px rgba(245, 158, 11, 0.9), 0 0 30px rgba(245, 158, 11, 0.5)',
+        activeCardBg: 'linear-gradient(135deg, rgba(69, 26, 3, 0.95), rgba(15, 23, 42, 0.98))'
+      },
+      mixto: {
+        panelBg: 'linear-gradient(180deg, rgba(59, 7, 100, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+        borderColor: '#a855f7',
+        glowColor: '0 0 35px rgba(168, 85, 247, 0.45)',
+        headerColor: '#d8b4fe',
+        dotColor: '#c084fc',
+        pillBg: 'rgba(59, 7, 100, 0.6)',
+        pillBorder: 'rgba(168, 85, 247, 0.5)',
+        pillText: '#e9d5ff',
+        badgeBg: 'rgba(168, 85, 247, 0.25)',
+        badgeBorder: 'rgba(168, 85, 247, 0.5)',
+        badgeText: '#d8b4fe',
+        activeCardGlow: '0 0 0 3px rgba(168, 85, 247, 0.9), 0 0 30px rgba(168, 85, 247, 0.5)',
+        activeCardBg: 'linear-gradient(135deg, rgba(59, 7, 100, 0.95), rgba(15, 23, 42, 0.98))'
+      },
+      deductivo: {
+        panelBg: 'linear-gradient(180deg, rgba(6, 78, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+        borderColor: '#10b981',
+        glowColor: '0 0 35px rgba(16, 185, 129, 0.45)',
+        headerColor: '#6ee7b7',
+        dotColor: '#34d399',
+        pillBg: 'rgba(6, 78, 59, 0.6)',
+        pillBorder: 'rgba(16, 185, 129, 0.5)',
+        pillText: '#a7f3d0',
+        badgeBg: 'rgba(16, 185, 129, 0.25)',
+        badgeBorder: 'rgba(16, 185, 129, 0.5)',
+        badgeText: '#6ee7b7',
+        activeCardGlow: '0 0 0 3px rgba(16, 185, 129, 0.9), 0 0 30px rgba(16, 185, 129, 0.5)',
+        activeCardBg: 'linear-gradient(135deg, rgba(6, 78, 59, 0.95), rgba(15, 23, 42, 0.98))'
+      },
+      inductivo: {
+        panelBg: 'linear-gradient(180deg, rgba(19, 78, 74, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+        borderColor: '#14b8a6',
+        glowColor: '0 0 35px rgba(20, 184, 166, 0.45)',
+        headerColor: '#5eead4',
+        dotColor: '#2dd4bf',
+        pillBg: 'rgba(19, 78, 74, 0.6)',
+        pillBorder: 'rgba(20, 184, 166, 0.5)',
+        pillText: '#99f6e4',
+        badgeBg: 'rgba(20, 184, 166, 0.25)',
+        badgeBorder: 'rgba(20, 184, 166, 0.5)',
+        badgeText: '#5eead4',
+        activeCardGlow: '0 0 0 3px rgba(20, 184, 166, 0.9), 0 0 30px rgba(20, 184, 166, 0.5)',
+        activeCardBg: 'linear-gradient(135deg, rgba(19, 78, 74, 0.95), rgba(15, 23, 42, 0.98))'
+      },
+      analitico: {
+        panelBg: 'linear-gradient(180deg, rgba(22, 78, 99, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+        borderColor: '#06b6d4',
+        glowColor: '0 0 35px rgba(6, 182, 212, 0.45)',
+        headerColor: '#67e8f9',
+        dotColor: '#22d3ee',
+        pillBg: 'rgba(22, 78, 99, 0.6)',
+        pillBorder: 'rgba(6, 182, 212, 0.5)',
+        pillText: '#a5f3fc',
+        badgeBg: 'rgba(6, 182, 212, 0.25)',
+        badgeBorder: 'rgba(6, 182, 212, 0.5)',
+        badgeText: '#67e8f9',
+        activeCardGlow: '0 0 0 3px rgba(6, 182, 212, 0.9), 0 0 30px rgba(6, 182, 212, 0.5)',
+        activeCardBg: 'linear-gradient(135deg, rgba(22, 78, 99, 0.95), rgba(15, 23, 42, 0.98))'
+      },
+      datascience: {
+        panelBg: 'linear-gradient(180deg, rgba(30, 27, 75, 0.95) 0%, rgba(8, 51, 68, 0.98) 100%)',
+        borderColor: '#38bdf8',
+        glowColor: '0 0 35px rgba(56, 189, 248, 0.45)',
+        headerColor: '#7dd3fc',
+        dotColor: '#38bdf8',
+        pillBg: 'rgba(8, 51, 68, 0.6)',
+        pillBorder: 'rgba(56, 189, 248, 0.5)',
+        pillText: '#bae6fd',
+        badgeBg: 'rgba(56, 189, 248, 0.25)',
+        badgeBorder: 'rgba(56, 189, 248, 0.5)',
+        badgeText: '#7dd3fc',
+        activeCardGlow: '0 0 0 3px rgba(56, 189, 248, 0.9), 0 0 30px rgba(56, 189, 248, 0.5)',
+        activeCardBg: 'linear-gradient(135deg, rgba(30, 27, 75, 0.95), rgba(8, 51, 68, 0.98))'
+      }
+    };
+
+    // Hierarchical paths from Root node to each target node
+    const nodePaths = {
+      root: [
+        { key: 'root', label: 'Investigación Científica', level: 'Nivel 0 (Raíz)' }
+      ],
+      enfoques: [
+        { key: 'root', label: 'Investigación Científica', level: 'Nivel 0' },
+        { key: 'enfoques', label: 'Enfoques de Investigación (Rutas)', level: 'Nivel 1 (Dimensión)' }
+      ],
+      cuantitativo: [
+        { key: 'root', label: 'Investigación Científica', level: 'Nivel 0' },
+        { key: 'enfoques', label: 'Enfoques de Investigación', level: 'Nivel 1' },
+        { key: 'cuantitativo', label: 'Ruta Cuantitativa', level: 'Nivel 2 (Sub-rama)' }
+      ],
+      cualitativo: [
+        { key: 'root', label: 'Investigación Científica', level: 'Nivel 0' },
+        { key: 'enfoques', label: 'Enfoques de Investigación', level: 'Nivel 1' },
+        { key: 'cualitativo', label: 'Ruta Cualitativa', level: 'Nivel 2 (Sub-rama)' }
+      ],
+      mixto: [
+        { key: 'root', label: 'Investigación Científica', level: 'Nivel 0' },
+        { key: 'enfoques', label: 'Enfoques de Investigación', level: 'Nivel 1' },
+        { key: 'mixto', label: 'Ruta Mixta (Integrada)', level: 'Nivel 2 (Sub-rama)' }
+      ],
+      metodos: [
+        { key: 'root', label: 'Investigación Científica', level: 'Nivel 0' },
+        { key: 'metodos', label: 'Métodos de Investigación', level: 'Nivel 1 (Dimensión)' }
+      ],
+      deductivo: [
+        { key: 'root', label: 'Investigación Científica', level: 'Nivel 0' },
+        { key: 'metodos', label: 'Métodos de Investigación', level: 'Nivel 1' },
+        { key: 'deductivo', label: 'Método Deductivo', level: 'Nivel 2 (Sub-rama)' }
+      ],
+      inductivo: [
+        { key: 'root', label: 'Investigación Científica', level: 'Nivel 0' },
+        { key: 'metodos', label: 'Métodos de Investigación', level: 'Nivel 1' },
+        { key: 'inductivo', label: 'Método Inductivo', level: 'Nivel 2 (Sub-rama)' }
+      ],
+      analitico: [
+        { key: 'root', label: 'Investigación Científica', level: 'Nivel 0' },
+        { key: 'metodos', label: 'Métodos de Investigación', level: 'Nivel 1' },
+        { key: 'analitico', label: 'Analítico - Sintético', level: 'Nivel 2 (Sub-rama)' }
+      ],
+      datascience: [
+        { key: 'root', label: 'Investigación Científica', level: 'Nivel 0' },
+        { key: 'mixto', label: 'Enfoque Mixto + Multimétodo', level: 'Nivel 2' },
+        { key: 'datascience', label: 'Convergencia en Ciencia de Datos', level: 'Nivel 3 (Campo Profesional)' }
+      ]
+    };
+
+    // Database of concepts, clear definitions and Data Science relevance
+    const nodeData = {
+      root: {
+        category: 'Concepto Raíz',
+        title: 'Investigación Científica',
+        subtitle: 'Hernández-Sampieri & Mendoza (2018); Pimienta et al. (2018)',
+        desc: 'Es un proceso metódico, controlado y empírico para responder preguntas sobre la realidad. No se basa en opiniones subjetivas, sino en contrastar ideas frente a evidencias concretas y verificables.',
+        features: [
+          'Sistemática y empírica: sigue fases ordenadas y recoge pruebas del mundo real.',
+          'Falible: sus conclusiones siempre son revisables si aparecen nuevos datos.',
+          'Articulada: necesita una estrategia general (enfoque) y procedimientos técnicos (métodos).'
+        ],
+        dsRole: 'Es el marco de trabajo para formular proyectos analíticos: evita confundir correlaciones falsas o casuales con patrones reales de negocio.'
+      },
+      enfoques: {
+        category: 'Estrategia Global',
+        title: 'Enfoques de Investigación (Rutas)',
+        subtitle: 'Hernández-Sampieri & Mendoza (2018, pp. 2-15)',
+        desc: 'Representan la cosmovisión o estrategia paradigmática global. Definen cómo se concibe la realidad: si buscamos medir magnitudes objetivas, interpretar vivencias humanas, o combinar ambas.',
+        features: [
+          'Visión holística y paradigmática del proceso.',
+          'Determina qué tipo de preguntas son válidas y qué datos se recogerán.',
+          'Se dividen principalmente en tres rutas: Cuantitativa, Cualitativa y Mixta.'
+        ],
+        dsRole: 'Define la filosofía de trabajo: si construiremos un modelo predictivo masivo (cuantitativo), exploraremos el dolor del usuario mediante entrevistas (cualitativo) o ambos.'
+      },
+      metodos: {
+        category: 'Procedimiento Lógico',
+        title: 'Métodos de Investigación',
+        subtitle: 'Pimienta Prieto, De la Orden & Estrada (2018, pp. 28-34)',
+        desc: 'Es el camino estructurado de operaciones racionales y técnicas para alcanzar un objetivo investigativo. Es más técnico y operativo que el enfoque.',
+        features: [
+          'Conjunto ordenado de operaciones lógicas de razonamiento.',
+          'Incluye operaciones como la deducción, la inducción, el análisis y la síntesis.',
+          'Garantiza que los resultados se puedan verificar y replicar paso a paso.'
+        ],
+        dsRole: 'Es el algoritmo procedimental: el paso a paso desde el preprocesamiento de datos, diseño de variables (Feature Engineering) y validación del modelo.'
+      },
+      cuantitativo: {
+        category: 'Ruta Epistemológica',
+        title: 'Ruta Cuantitativa',
+        subtitle: 'Hernández-Sampieri & Mendoza (2018)',
+        desc: 'Ruta secuencial y probatoria que utiliza mediciones numéricas y análisis estadístico para verificar hipótesis previamente formuladas.',
+        features: [
+          'Pretende generalizar resultados a partir de muestras representativas.',
+          'Prioriza el control, la objetividad y la precisión matemática.',
+          'Proceso deductivo lineal: Teoría → Hipótesis → Muestra → Medición → Conclusión.'
+        ],
+        dsRole: 'Es el corazón de los modelos supervisados de Machine Learning, regresiones, pruebas A/B y métricas de error (RMSE, AUC-ROC, precisión).'
+      },
+      cualitativo: {
+        category: 'Ruta Epistemológica',
+        title: 'Ruta Cualitativa',
+        subtitle: 'Hernández-Sampieri & Mendoza (2018)',
+        desc: 'Ruta circular y flexible que busca comprender e interpretar el sentido que las personas dan a los fenómenos en su propio entorno natural.',
+        features: [
+          'Enfocada en el significado, intenciones y contexto de los sujetos.',
+          'Usa métodos predominantemente inductivos y dialógicos.',
+          'No busca generalización numérica, sino profundidad de comprensión.'
+        ],
+        dsRole: 'Vital en la investigación de experiencia de usuario (UX Research), entrevistas con stakeholders para definir requisitos y auditorías de interpretabilidad humana del modelo.'
+      },
+      mixto: {
+        category: 'Ruta Epistemológica',
+        title: 'Ruta Mixta (Integrada)',
+        subtitle: 'Hernández-Sampieri & Mendoza (2018)',
+        desc: 'Ruta que integra de forma sistemática datos cuantitativos y cualitativos en un solo estudio para lograr una comprensión de 360 grados.',
+        features: [
+          'Triangulación metodológica de diferentes fuentes de evidencia.',
+          'Pragmatismo: utiliza lo que mejor sirva para resolver el problema real.',
+          'Neutraliza las limitaciones aisladas de cada método único.'
+        ],
+        dsRole: 'Es el día a día del Científico de Datos integral: generar predicciones matemáticas robustas pero contextualizadas con las necesidades humanas del negocio.'
+      },
+      deductivo: {
+        category: 'Operación Lógica',
+        title: 'Método Deductivo / Hipotético-Deductivo',
+        subtitle: 'Pimienta et al. (2018)',
+        desc: 'Razonamiento lógico que va de lo general a lo particular: parte de teorías o leyes conocidas para deducir hipótesis que se comprueban experimentalmente.',
+        features: [
+          'Estructura: Ley general → Caso particular → Contrastación observacional.',
+          'Garantiza rigor formal y control experimental.',
+          'Base del método científico experimental moderno.'
+        ],
+        dsRole: 'Se aplica al formular hipótesis de causalidad de negocio (ej. "el nuevo algoritmo aumentará la conversión un 4%") y probarlas con conjuntos de test o pruebas de hipótesis estadísticas.'
+      },
+      inductivo: {
+        category: 'Operación Lógica',
+        title: 'Método Inductivo',
+        subtitle: 'Pimienta et al. (2018)',
+        desc: 'Razonamiento lógico que va de lo particular a lo general: parte de la observación repetida de casos específicos para identificar patrones y formular generalizaciones.',
+        features: [
+          'Fundamental para descubrir nuevas relaciones empíricas.',
+          'Parte directamente de la evidencia observada sin presupuestos rígidos.',
+          'Sujeto a ajuste continuo si surgen casos que contradigan la regla.'
+        ],
+        dsRole: 'Es la filosofía exacta del Aprendizaje Automático (Machine Learning): el algoritmo "aprende" induciendo funciones y patrones a partir de miles o millones de filas de datos.'
+      },
+      analitico: {
+        category: 'Operación Lógica',
+        title: 'Método Analítico - Sintético',
+        subtitle: 'Pimienta et al. (2018)',
+        desc: 'El análisis descompone un todo en sus componentes individuales para estudiarlos; la síntesis vuelve a unirlos en un entendimiento integral.',
+        features: [
+          'Permite desentrañar sistemas multidimensionales complejos.',
+          'El análisis aísla variables clave; la síntesis modela sus interacciones.',
+          'Operaciones dialécticas complementarias.'
+        ],
+        dsRole: 'Esencial en la ingeniería de variables (Feature Engineering), descomposición de series de tiempo (tendencia, estacionalidad, residuo) y ensamblaje de modelos (Random Forests, Gradient Boosting).'
+      },
+      datascience: {
+        category: 'Campo Profesional',
+        title: 'Convergencia en Ciencia de Datos',
+        subtitle: 'Articulación Metodológica Profesional',
+        desc: 'La Ciencia de Datos es un campo inherentemente multimetódico: combina el rigor deductivo de la estadística formal con la potencia inductiva de la computación masiva.',
+        features: [
+          'Aplica la Ruta Mixta por definición.',
+          'Usa deducción (pruebas de hipótesis formales) e inducción (entrenamiento de redes neuronales y minería de datos).',
+          'Añade análisis cualitativo para prevenir sesgos discriminatorios y garantizar impacto ético.'
+        ],
+        dsRole: 'El científico de datos no es solo un programador: es un investigador que elige el método adecuado según la naturaleza de la pregunta y el impacto social del resultado.'
+      }
+    };
+
+    // Tracking explored nodes for progress bar
+    const exploredNodes = new Set(['root']);
+    const totalNodes = Object.keys(nodeData).length;
+
+    // Node Click Handler: Expands definition & unfolds branches
+    function handleNodeClick(nodeKey) {
+      // 1. Mark as explored
+      exploredNodes.add(nodeKey);
+      updateProgressBar();
+
+      // 2. Fetch theme palette for node
+      const theme = themePalettes[nodeKey] || themePalettes.root;
+
+      // 3. Highlight active node with its specific theme color
+      document.querySelectorAll('.node-interactive').forEach(el => {
+        el.style.boxShadow = '';
+        el.style.borderColor = '';
+        el.style.transform = '';
+        const existingPill = el.querySelector('.active-node-indicator');
+        if (existingPill) existingPill.remove();
+      });
+
+      const currentEl = document.getElementById(`node-${nodeKey}`);
+      if (currentEl) {
+        currentEl.style.boxShadow = theme.activeCardGlow;
+        currentEl.style.borderColor = theme.borderColor;
+        currentEl.style.transform = 'scale(1.02)';
+        
+        // Add indicator pill matching the theme color
+        const indicator = document.createElement('div');
+        indicator.className = 'active-node-indicator absolute top-2 right-2 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md animate-pulse z-20';
+        indicator.style.backgroundColor = theme.borderColor;
+        indicator.style.color = '#020617';
+        indicator.innerText = '📍 SELECCIONADO';
+        currentEl.appendChild(indicator);
+      }
+
+      // 4. Dynamically morph the Inspector Panel background and accents to the node's theme
+      const inspectorPanel = document.getElementById('inspectorPanel');
+      if (inspectorPanel) {
+        inspectorPanel.style.background = theme.panelBg;
+        inspectorPanel.style.borderColor = theme.borderColor;
+        inspectorPanel.style.boxShadow = theme.glowColor;
+      }
+
+      // Update inspector header details
+      const titleHeader = document.getElementById('inspectorTitleHeader');
+      if (titleHeader) titleHeader.style.color = theme.headerColor;
+
+      const dot = document.getElementById('inspectorDot');
+      if (dot) dot.style.backgroundColor = theme.dotColor;
+
+      const ping = document.getElementById('inspectorPing');
+      if (ping) ping.style.backgroundColor = theme.dotColor;
+
+      const categoryBadge = document.getElementById('inspectorCategory');
+      if (categoryBadge) {
+        categoryBadge.style.backgroundColor = theme.badgeBg;
+        categoryBadge.style.borderColor = theme.badgeBorder;
+        categoryBadge.style.color = theme.badgeText;
+      }
+
+      const nodePill = document.getElementById('inspectorNodePill');
+      if (nodePill) {
+        nodePill.style.backgroundColor = theme.pillBg;
+        nodePill.style.borderColor = theme.pillBorder;
+        nodePill.style.color = theme.pillText;
+      }
+
+      const statusBadge = document.getElementById('inspectorStatusBadge');
+      if (statusBadge) {
+        statusBadge.style.backgroundColor = theme.badgeBg;
+        statusBadge.style.color = theme.headerColor;
+      }
+
+      // 5. Render dynamic breadcrumb path
+      renderBreadcrumbs(nodeKey, theme);
+
+      // 6. Update Inspector text content
+      updateInspector(nodeKey);
+
+      // Update active node label in inspector
+      const activeLabel = document.getElementById('activeNodeLabel');
+      if (activeLabel && nodeData[nodeKey]) {
+        activeLabel.innerText = nodeData[nodeKey].title;
+      }
+
+      // 7. Reveal sub-branches if clicking parents or related children
+      if (nodeKey === 'root') {
+        toggleBranch('branch-level-1', true);
+        toggleBranch('conn-level-1', true);
+      } else if (nodeKey === 'enfoques') {
+        toggleBranch('branch-enfoques-children', true);
+        const badgeE = document.getElementById('badge-enfoques');
+        if (badgeE) badgeE.innerText = 'Desplegado ✓';
+      } else if (nodeKey === 'metodos') {
+        toggleBranch('branch-metodos-children', true);
+        const badgeM = document.getElementById('badge-metodos');
+        if (badgeM) badgeM.innerText = 'Desplegado ✓';
+      } else if (['cuantitativo', 'cualitativo', 'mixto'].includes(nodeKey)) {
+        toggleBranch('branch-enfoques-children', true);
+      } else if (['deductivo', 'inductivo', 'analitico'].includes(nodeKey)) {
+        toggleBranch('branch-metodos-children', true);
+      }
+    }
+
+    // Helper to smoothly toggle branch opacity and interactivity
+    function toggleBranch(elementId, show) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      if (show) {
+        el.style.opacity = '1';
+        el.style.pointerEvents = 'auto';
+      } else {
+        el.style.opacity = '0.35';
+      }
+    }
+
+    // Render full breadcrumb trail from root to the active node
+    function renderBreadcrumbs(nodeKey, theme) {
+      const container = document.getElementById('inspectorBreadcrumbs');
+      const levelBadge = document.getElementById('inspectorLevelBadge');
+      if (!container) return;
+
+      const pathSteps = nodePaths[nodeKey] || nodePaths.root;
+      container.innerHTML = '';
+
+      // Update level badge with current depth
+      if (levelBadge && pathSteps.length > 0) {
+        const lastStep = pathSteps[pathSteps.length - 1];
+        levelBadge.innerText = lastStep.level || `Nivel ${pathSteps.length - 1}`;
+        levelBadge.style.backgroundColor = theme.badgeBg;
+        levelBadge.style.borderColor = theme.badgeBorder;
+        levelBadge.style.color = theme.badgeText;
+      }
+
+      pathSteps.forEach((step, index) => {
+        const isCurrent = index === pathSteps.length - 1;
+
+        if (isCurrent) {
+          // Current active node (last breadcrumb step)
+          const currentChip = document.createElement('span');
+          currentChip.className = 'font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 shadow-sm text-[11px]';
+          currentChip.style.backgroundColor = theme.pillBg;
+          currentChip.style.borderColor = theme.borderColor;
+          currentChip.style.color = '#ffffff';
+          currentChip.innerHTML = `<span>📍</span><span>${step.label}</span>`;
+          container.appendChild(currentChip);
+        } else {
+          // Preceding step (clickable navigation item)
+          const stepBtn = document.createElement('button');
+          stepBtn.type = 'button';
+          stepBtn.className = 'font-medium text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700/80 hover:border-slate-500 transition-all flex items-center gap-1 text-[11px] cursor-pointer';
+          stepBtn.title = `Regresar a ${step.label}`;
+          stepBtn.innerHTML = `<span>${step.label}</span>`;
+          stepBtn.onclick = (e) => {
+            e.stopPropagation();
+            handleNodeClick(step.key);
+          };
+          container.appendChild(stepBtn);
+
+          // Breadcrumb arrow separator
+          const separator = document.createElement('span');
+          separator.className = 'text-slate-500 font-bold text-[10px] select-none';
+          separator.innerText = '→';
+          container.appendChild(separator);
+        }
+      });
+    }
+
+    // Update definition inspector DOM
+    function updateInspector(nodeKey) {
+      const data = nodeData[nodeKey];
+      if (!data) return;
+
+      document.getElementById('inspectorCategory').innerText = data.category;
+      document.getElementById('nodeTitle').innerText = data.title;
+      document.getElementById('nodeSubtitle').innerText = data.subtitle;
+      document.getElementById('nodeDesc').innerText = data.desc;
+      document.getElementById('nodeDsRole').innerText = data.dsRole;
+
+      const featuresUl = document.getElementById('nodeFeatures');
+      featuresUl.innerHTML = '';
+      data.features.forEach(f => {
+        const li = document.createElement('li');
+        li.className = "flex items-start gap-1.5";
+        li.innerHTML = `<span class="text-emerald-400">✓</span><span>${f}</span>`;
+        featuresUl.appendChild(li);
+      });
+    }
+
+    // Update exploration counter
+    function updateProgressBar() {
+      const count = exploredNodes.size;
+      const countEl = document.getElementById('progressCount');
+      const barEl = document.getElementById('progressBar');
+      if (countEl && barEl) {
+        countEl.innerText = `${count} / ${totalNodes}`;
+        const pct = Math.round((count / totalNodes) * 100);
+        barEl.style.width = `${pct}%`;
+      }
+    }
+
+    // Expand all branches at once
+    function expandAll() {
+      Object.keys(nodeData).forEach(k => exploredNodes.add(k));
+      updateProgressBar();
+
+      ['branch-level-1', 'conn-level-1', 'branch-enfoques-children', 'branch-metodos-children'].forEach(id => {
+        toggleBranch(id, true);
+      });
+
+      const badgeE = document.getElementById('badge-enfoques');
+      if (badgeE) badgeE.innerText = 'Desplegado ✓';
+      const badgeM = document.getElementById('badge-metodos');
+      if (badgeM) badgeM.innerText = 'Desplegado ✓';
+
+      updateInspector('datascience');
+      handleNodeClick('datascience');
+    }
+
+    // Reset tree to initial guided state
+    function resetTree() {
+      exploredNodes.clear();
+      exploredNodes.add('root');
+      updateProgressBar();
+
+      // Soft dim child branches until clicked
+      const childBranches = ['branch-enfoques-children', 'branch-metodos-children'];
+      childBranches.forEach(id => {
+        toggleBranch(id, false);
+      });
+
+      const badgeE = document.getElementById('badge-enfoques');
+      if (badgeE) badgeE.innerText = 'Toca para desplegar ▾';
+      const badgeM = document.getElementById('badge-metodos');
+      if (badgeM) badgeM.innerText = 'Toca para desplegar ▾';
+
+      updateInspector('root');
+      handleNodeClick('root');
+    }
+
+    // Safe clipboard copy function
+    function copyToClipboardFallback(text, labelId, successMsg) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        document.execCommand('copy');
+        const label = document.getElementById(labelId);
+        if (label) {
+          const originalText = label.innerText;
+          label.innerText = successMsg;
+          setTimeout(() => {
+            label.innerText = originalText;
+          }, 2500);
+        }
+      } catch (err) {
+        console.error('Error al copiar texto:', err);
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+
+    // Copy APA references
+    function copyReferences() {
+      const refText = `Hernández-Sampieri, R., y Mendoza, C. P. (2018). Parte 1. Las rutas de investigación. En Metodología de la investigación: Las rutas cuantitativa, cualitativa y mixta (pp. 1-23). McGraw-Hill Interamericana Editores.\n\n` +
+        `Pimienta Prieto, J., De la Orden Hoz, A., y Estrada Coronado, R. M. (2018). Utilidad y características de la metodología de investigación. En Metodología de la investigación (pp. 28-34). Pearson Educación.`;
+
+      copyToClipboardFallback(refText, 'copyBtnLabel', '¡Referencias Copiadas!');
+    }
+
+    // Initialize root on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      resetTree();
+    });
+  </script>
+</body>
+</html>
